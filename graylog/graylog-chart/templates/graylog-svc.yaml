@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Values.graylog.namespace }}
+spec:
+  type: ClusterIP
+  selector:
+    app: graylog
+  ports:
+  - name: "ui"
+    port: {{ .Values.graylog.service.port }}
+    targetPort: {{ .Values.graylog.service.targetPort }}
+  - name: "log"
+    port: 12201
+    targetPort: 12201

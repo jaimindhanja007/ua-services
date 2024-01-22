@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Values.elasticsearch.serviceAccount.dname }}
+  namespace: {{ .Values.elasticsearch.namespace }}
+spec:
+  serviceName: elasticsearch
+  replicas: 1
+  selector:
+    matchLabels:
+      app: elasticsearch
+  template:
+    metadata:
+      labels:
+        app: elasticsearch
+    spec:
+      containers:
+      - name: {{ .Values.elasticsearch.serviceAccount.sname }}
+        image: {{ .Values.elasticsearch.image.repository }}
+        ports:
+        - containerPort: {{ .Values.elasticsearch.ports.port1 }}
+          name: restapi
+          protocol: TCP
+        - containerPort: {{ .Values.elasticsearch.ports.port2 }}
+          name: node2node
+          protocol: TCP
+        volumeMounts:
+        - name: datavolume
+          mountPath: /usr/share/elasticsearch/data
+        env:
+          - name: cluster.name
+            value: demo-cluster
+          - name: node.name
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: discovery.seed_hosts
+            value: "es-cls-0.elasticsearch"
+          - name: cluster.initial_master_nodes
+            value: "es-cls-0"
+          - name: ES_JAVA_OPTS
+            value: "-Xms512m -Xmx512m"
+      initContainers:    ## 3 busybox images to handle neccesary jobs before ES cluster goes up.
+      - name: configure-permissions
+        image: busybox
+        command: ["sh", "-c", "chown -R 1000:1000 /usr/share/elasticsearch/data"]
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: datavolume
+          mountPath: /usr/share/elasticsearch/data
+      - name: configure-vm-max-map-count
+        image: busybox
+        command: ["sysctl", "-w", "vm.max_map_count=262144"]
+        securityContext:
+          privileged: true
+      - name: configure-ulimit
+        image: busybox
+        command: ["sh", "-c", "ulimit -n 65536"]
+        securityContext:
+          privileged: true   
+  volumeClaimTemplates:
+  - metadata:
+      name: datavolume
+      labels:
+        app: elasticsearch
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: standard
+      resources:
+        requests:
+          storage: 5Gi

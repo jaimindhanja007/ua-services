@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.elasticsearch.serviceAccount.sname }}
+  namespace: {{ .Values.elasticsearch.namespace }}
+  labels:
+    app: elasticsearch
+spec:
+  selector:
+    app: elasticsearch
+  clusterIP: None
+  ports:
+    - port: {{ .Values.elasticsearch.ports.port1 }}
+      name: {{ .Values.elasticsearch.ports.name1 }}
+    - port: {{ .Values.elasticsearch.ports.port2 }}
+      name: {{ .Values.elasticsearch.ports.name2 }}
