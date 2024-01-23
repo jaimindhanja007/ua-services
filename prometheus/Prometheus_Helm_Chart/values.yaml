@@ -1,0 +1,16 @@
+# prometheus-chart/values.yaml
+
+replicaCount: 1
+
+image:
+  repository: prom/prometheus
+  tag: v2.30.3
+  pullPolicy: IfNotPresent
+
+service:
+  annotations: {}
+  port: 9090
+  targetPort: 9090
+  type: ClusterIP
+
+resources: {}
