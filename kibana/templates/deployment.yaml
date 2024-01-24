@@ -2,45 +2,43 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Values.deployment.name }}
-  namespace: {{ .Values.deployment.nameSpace }}
   labels:
-    app: {{ .Values.deployment.app }}
+    name: {{ .Values.deployment.name }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
   selector:
     matchLabels:
-      app: {{ .Values.deployment.app }}
+      {{- include "kibana.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       {{- with .Values.podAnnotations }}
-      # annotations:
-      #   {{- toYaml . | nindent 8 }}
-      # {{- end }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       labels:
-        # {{- include "kibana.labels" . | nindent 8 }}
-        # {{- with .Values.podLabels }}
-        # {{- toYaml . | nindent 8 }}
-        # {{- end }}
-        app: {{ .Values.deployment.app }}
+        {{- include "kibana.labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "kibana.serviceAccountName" . }}
+      serviceAccountName: {{ .Values.deployment.name }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
         - name: {{ .Chart.Name }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          image: "{{ .Values.deployment.image }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http
-              containerPort: {{ .Values.service.servicePort }}
+              containerPort: {{ .Values.service.port }}
               protocol: TCP
           livenessProbe:
             httpGet:
@@ -51,13 +49,8 @@ spec:
               path: /
               port: http
           resources:
-            limits:
-            cpu: 100m
-          requests:
-            cpu: 10m
-          env:
-            name: {{ .Values.deployment.env.name }}
-            value: {{ .Values.deployment.env.value }}
+            {{- toYaml .Values.resources | nindent 12 }}
+          {{- with .Values.volumeMounts }}
           volumeMounts:
             {{- toYaml . | nindent 12 }}
           {{- end }}
