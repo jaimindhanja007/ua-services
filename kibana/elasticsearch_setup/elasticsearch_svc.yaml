@@ -1,16 +1,16 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: {{ .Values.elastic.serviceName }}
-  namespace: {{ .Values.elastic.serviceNameSpace }}
+  name: {{ .Values.elasticservice.serviceName }}
+  namespace: {{ .Values.elasticservice.nameSpace }}
   labels:
-    app: {{ .Values.elastic.serviceName }}
+    app: {{ .Values.elasticservice.serviceName }}
 spec:
   selector:
-    app: {{ .Values.elastic.serviceName }}
+    app: {{ .Values.elasticservice.serviceName }}
   clusterIP: None
   ports:
-    - port: {{ .Values.elastic.servicePort }}
+    - port: {{ .Values.elasticservice.port }}
       name: rest
-    - port: {{ .Values.elastic.serviceInterPort }}
+    - port: 9300
       name: inter-node
