@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: {{ .Values.statefulset.name }}
+  name: es-cluster
   namespace: {{ .Values.statefulset.nameSpace }}
 spec:
   serviceName: {{ .Values.statefulset.serviceName }}
@@ -69,7 +69,7 @@ spec:
           privileged: true
   volumeClaimTemplates:
   - metadata:
-      name: {{ .Values.statefulset.name }}
+      name: data
       labels:
         app: {{ .Values.statefulset.metadata.labels.app }}
     spec:
