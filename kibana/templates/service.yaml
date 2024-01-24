@@ -1,16 +1,15 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: { { .Values.service.serviceName } }
-  namespace: { { .Values.service.serviceNameSpace } }
+  name: {{ .Values.service.name }}
   labels:
-    app: { { .Values.service.serviceName } }
+    name: {{ .Values.service.name }}
 spec:
-  type: { { .Values.service.serviceType } }
+  type: {{ .Values.service.type }}
   ports:
-    - port: { { .Values.service.servicePort } }
+    - port: {{ .Values.service.port }}
       targetPort: http
       protocol: TCP
       name: http
   selector:
-    app: { { .Values.selector.serviceName } }
+    name: {{ .Values.service.name }}
