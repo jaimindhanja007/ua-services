@@ -9,5 +9,6 @@ spec:
       port: {{ .Values.mongodb.service.port }}  
       targetPort: {{ .Values.mongodb.service.targetport }}  
   clusterIP: None  
+  
   selector:
     app: mongo
