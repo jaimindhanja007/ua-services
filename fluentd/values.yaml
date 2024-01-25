@@ -65,7 +65,7 @@ serviceAccount:
   labels:
     app: fluentd
   serviceAccountName: fluentd
-  serviceAccountNameSpace: kube-system
+  serviceAccountNameSpace: kube-log
   selectorName: fluentd
 
 clusterRole:
@@ -79,15 +79,15 @@ clusterRoleBinding:
   name: fluentd
   labels:
     app: fluentd
-  nameSpace: kube-system
+  nameSpace: kube-log
 
 daemonset:
   name: fluentd
-  nameSpace: kube-system
+  nameSpace: kube-log
   labels:
     app: fluentd
   serviceAccountName: fluentd
-  serviceAccountNameSpace: kube-system
+  serviceAccountNameSpace: kube-log
   selectorName: fluentd
   nameOverride: ""
   fullnameOverride: ""
