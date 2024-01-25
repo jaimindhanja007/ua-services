@@ -1,80 +1,154 @@
+# apiVersion: apps/v1
+# kind: StatefulSet
+# metadata:
+#   name: {{ .Values.statefulset.name }}
+#   namespace: {{ .Values.statefulset.nameSpace }}
+# spec:
+#   serviceName: {{ .Values.statefulset.serviceName }}
+#   replicas: {{ .Values.statefulset.replicas }}
+#   selector:
+#     matchLabels:
+#       app: {{ .Values.statefulset.labels.app }}
+#   template:
+#     metadata:
+#       labels:
+#         app: {{ .Values.statefulset.labels.app }}
+#     spec:
+#       containers:
+#       - name: {{ .Values.statefulset.specContainerName }}
+#         image: {{ .Values.statefulset.image }}
+#         imagePullPolicy: Always
+#         resources:
+#           limits:
+#             cpu: {{ .Values.statefulset.resources.limits.cpu }}
+#           requests:
+#             cpu: {{ .Values.statefulset.resources.requests.cpu }}
+#         ports:
+#         - containerPort: {{ .Values.statefulset.ports.containerPort }}
+#           name: restapi
+#           protocol: TCP
+#         - containerPort: {{ .Values.statefulset.ports.containerInterPort }}
+#           name: inter-node
+#           protocol: TCP
+#         volumeMounts:
+#         - name: data
+#           mountPath: /usr/share/elasticsearch/data
+#         env:
+#         - name: cluster.name
+#           value: k8s-logs
+#         - name: node.name
+#           valueFrom:
+#             fieldRef:
+#               fieldPath: metadata.name
+#         - name: discovery.seed_hosts
+#           value: "es-cluster-0.elasticsearch"
+#         - name: cluster.initial_master_nodes
+#           value: "es-cluster-0"
+#         - name: ES_JAVA_OPTS
+#           value: "-Xms512m -Xmx512m"
+#         - name: network.host
+#           value: "_site_"
+#       initContainers:
+#       - name: fix-permissions
+#         image: busybox
+#         command: ["sh", "-c", "chown -R 1000:1000 /usr/share/elasticsearch/data"]
+#         securityContext:
+#           privileged: true
+#         volumeMounts:
+#         - name: data
+#           mountPath: /usr/share/elasticsearch/data
+#       - name: increase-vm-max-map
+#         image: busybox
+#         command: ["sysctl", "-w", "vm.max_map_count=262144"]
+#         securityContext:
+#           privileged: true
+#       - name: increase-fd-ulimit
+#         image: busybox
+#         command: ["sh", "-c", "ulimit -n 65536"]
+#         securityContext:
+#           privileged: true
+#   volumeClaimTemplates:
+#   - metadata:
+#       name: data
+#       labels:
+#         app: {{ .Values.statefulset.metadata.labels.app }}
+#     spec:
+#       accessModes: [ "ReadWriteOnce" ]
+#       storageClassName: {{ .Values.statefulset.storageClass }}
+#       resources:
+#         requests:
+#           storage: {{ .Values.statefulset.specResourceRequestStorage }}
+
+
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: {{ .Values.statefulset.name }}
-  namespace: {{ .Values.statefulset.nameSpace }}
+  name: es-cluster
+  namespace: kube-logging
 spec:
-  serviceName: {{ .Values.statefulset.serviceName }}
-  replicas: {{ .Values.statefulset.replicas }}
+  serviceName: elasticsearch
+  replicas: 1
   selector:
     matchLabels:
-      app: {{ .Values.statefulset.labels.app }}
+      app: elasticsearch
   template:
     metadata:
       labels:
-        app: {{ .Values.statefulset.labels.app }}
+        app: elasticsearch
     spec:
       containers:
-      - name: {{ .Values.statefulset.specContainerName }}
-        image: {{ .Values.statefulset.image }}
-        imagePullPolicy: Always
-        resources:
-          limits:
-            cpu: {{ .Values.statefulset.resources.limits.cpu }}
-          requests:
-            cpu: {{ .Values.statefulset.resources.requests.cpu }}
+      - name: elasticsearch
+        image: docker.elastic.co/elasticsearch/elasticsearch:7.15.0
         ports:
-        - containerPort: {{ .Values.statefulset.ports.containerPort }}
-          name: rest
+        - containerPort: 9200
+          name: restapi
           protocol: TCP
-        - containerPort: {{ .Values.statefulset.ports.containerInterPort }}
-          name: inter-node
+        - containerPort: 9300
+          name: node2node
           protocol: TCP
         volumeMounts:
-        - name: data
+        - name: datavolume
           mountPath: /usr/share/elasticsearch/data
         env:
-        - name: cluster.name
-          value: k8s-logs
-        - name: node.name
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
-        - name: discovery.seed_hosts
-          value: "es-cluster-0.elasticsearch"
-        - name: cluster.initial_master_nodes
-          value: "es-cluster-0"
-        - name: ES_JAVA_OPTS
-          value: "-Xms512m -Xmx512m"
-        - name: network.host
-          value: "_site_"
-      initContainers:
-      - name: fix-permissions
+          - name: cluster.name
+            value: demo-cluster
+          - name: node.name
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: discovery.seed_hosts
+            value: "es-cls-0.elasticsearch"
+          - name: cluster.initial_master_nodes
+            value: "es-cls-0"
+          - name: ES_JAVA_OPTS
+            value: "-Xms512m -Xmx512m"
+      initContainers:    ## 3 busybox images to handle neccesary jobs before ES cluster goes up.
+      - name: configure-permissions
         image: busybox
         command: ["sh", "-c", "chown -R 1000:1000 /usr/share/elasticsearch/data"]
         securityContext:
           privileged: true
         volumeMounts:
-        - name: data
+        - name: datavolume
           mountPath: /usr/share/elasticsearch/data
-      - name: increase-vm-max-map
+      - name: configure-vm-max-map-count
         image: busybox
         command: ["sysctl", "-w", "vm.max_map_count=262144"]
         securityContext:
           privileged: true
-      - name: increase-fd-ulimit
+      - name: configure-ulimit
         image: busybox
         command: ["sh", "-c", "ulimit -n 65536"]
         securityContext:
-          privileged: true
+          privileged: true   
   volumeClaimTemplates:
   - metadata:
-      name: data
+      name: datavolume
       labels:
-        app: {{ .Values.statefulset.metadata.labels.app }}
+        app: elasticsearch
     spec:
       accessModes: [ "ReadWriteOnce" ]
-      storageClassName: {{ .Values.statefulset.storageClass }}
+      storageClassName: standard
       resources:
         requests:
-          storage: {{ .Values.statefulset.specResourceRequestStorage }}
+          storage: 5Gi
