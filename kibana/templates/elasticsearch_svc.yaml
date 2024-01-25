@@ -8,7 +8,7 @@ metadata:
 spec:
   selector:
     app: {{ .Values.elastic.serviceName }}
-  # clusterIP: None
+  clusterIP: None
   ports:
     - port: {{ .Values.elastic.servicePort }}
       name: rest

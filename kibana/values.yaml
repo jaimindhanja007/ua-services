@@ -59,7 +59,8 @@ statefulset:
     name: data
     labels:
       app: elasticsearch
-  specResourceRequestStorage: 2Gi
+  storageClass: hostpath
+  specResourceRequestStorage: 5Gi
 
 serviceAccount:
   # Specifies whether a service account should be created
