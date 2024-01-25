@@ -4,77 +4,67 @@ metadata:
   name: {{ .Values.statefulset.name }}
   namespace: {{ .Values.statefulset.nameSpace }}
 spec:
-  serviceName: {{ .Values.statefulset.serviceName }}
-  replicas: {{ .Values.statefulset.replicas }}
+  serviceName: {{ .Values.statefulset.spec.serviceName }}
+  replicas: {{ .Values.statefulset.spec.replicas }}
   selector:
     matchLabels:
-      app: {{ .Values.statefulset.labels.app }}
+      app: {{ .Values.statefulset.spec.serviceName }}
   template:
     metadata:
       labels:
-        app: {{ .Values.statefulset.labels.app }}
+        app: {{ .Values.statefulset.spec.serviceName }}
     spec:
       containers:
-      - name: {{ .Values.statefulset.specContainerName }}
-        image: {{ .Values.statefulset.image }}
-        imagePullPolicy: Always
-        resources:
-          limits:
-            cpu: {{ .Values.statefulset.resources.limits.cpu }}
-          requests:
-            cpu: {{ .Values.statefulset.resources.requests.cpu }}
+      - name: {{ .Values.statefulset.spec.serviceName }}
+        image: {{ .Values.statefulset.spec.template.image }}
         ports:
-        - containerPort: {{ .Values.statefulset.ports.containerPort }}
-          name: rest
+        - containerPort: {{ .Values.statefulset.spec.template.ports.containerPort }}
+          name: restapi
           protocol: TCP
-        - containerPort: {{ .Values.statefulset.ports.containerInterPort }}
-          name: inter-node
+        - containerPort: {{ .Values.statefulset.spec.template.ports.containerPortn2n }}
+          name: node2node
           protocol: TCP
         volumeMounts:
-        - name: data
-          mountPath: /usr/share/elasticsearch/data
+        - name: {{ .Values.statefulset.spec.template.volumeMounts.name }}
+          mountPath: {{ .Values.statefulset.spec.template.volumeMounts.mountPath }}
         env:
-        - name: cluster.name
-          value: k8s-logs
-        - name: node.name
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
-        - name: discovery.seed_hosts
-          value: "es-cluster-0.elasticsearch,es-cluster-1.elasticsearch,es-cluster-2.elasticsearch"
-        - name: cluster.initial_master_nodes
-          value: "es-cluster-0"
-        - name: ES_JAVA_OPTS
-          value: "-Xms512m -Xmx512m"
-        - name: network.host
-          value: "_site_"
-      initContainers:
-      - name: fix-permissions
+          - name: cluster.name
+            value: demo-cluster
+          - name: node.name
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: discovery.seed_hosts
+            value: "es-cls-0.elasticsearch"
+          - name: cluster.initial_master_nodes
+            value: "es-cls-0"
+          - name: ES_JAVA_OPTS
+            value: "-Xms512m -Xmx512m"
+      initContainers:    ## 3 busybox images to handle neccesary jobs before ES cluster goes up.
+      - name: configure-permissions
         image: busybox
         command: ["sh", "-c", "chown -R 1000:1000 /usr/share/elasticsearch/data"]
         securityContext:
           privileged: true
         volumeMounts:
-        - name: data
-          mountPath: /usr/share/elasticsearch/data
-      - name: increase-vm-max-map
-        image: busybox
+        - name: {{ .Values.statefulset.spec.template.volumeMounts.name }}
+          mountPath: {{ .Values.statefulset.spec.template.volumeMounts.mountPath }}
+      - name: configure-vm-max-map-count
+        image: {{ .Values.statefulset.spec.template.initContainers.image }}
         command: ["sysctl", "-w", "vm.max_map_count=262144"]
         securityContext:
           privileged: true
-      - name: increase-fd-ulimit
+      - name: configure-ulimit
         image: busybox
         command: ["sh", "-c", "ulimit -n 65536"]
         securityContext:
-          privileged: true
+          privileged: true   
   volumeClaimTemplates:
   - metadata:
-      name: {{ .Values.statefulset.name }}
-      labels:
-        app: {{ .Values.statefulset.metadata.labels.app }}
+      name: {{ .Values.statefulset.spec.volumeClaimTemplates.name }}
     spec:
       accessModes: [ "ReadWriteOnce" ]
-      storageClassName: {{ .Values.statefulset.storageClass }}
+      storageClassName: {{ .Values.statefulset.spec.volumeClaimTemplates.storageClassName }}
       resources:
         requests:
-          storage: {{ .Values.statefulset.specResourceRequestStorage }}
+          storage: {{ .Values.statefulset.spec.volumeClaimTemplates.spec.resources.storage }}

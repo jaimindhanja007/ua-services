@@ -14,6 +14,10 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
+persistentVolume:
+  storage: 2Gi
+  path: "/Users/jaimindhanja/Desktop/Jaimin/UnifyApps/storage"
+
 elastic:
   storageClass: elastic-sc
   storageNameSpace: elk
@@ -23,34 +27,28 @@ elastic:
   serviceInterPort: 9300
 
 statefulset:
-  name: es-cluster
+  name: es-cls
   nameSpace: elk
-  labels:
-    app: elasticsearch
-  serviceName: elasticsearch
-  replicas: 1
-  selector:
-    matchLabels:
-      app: elasticsearch
-  specContainerName: elasticsearch
-  image: elasticsearch:7.17.5
-  imagePullPolicy: Always
-  resources:
-      limits:
-        cpu: 100m
-      requests:
-        cpu: 10m
-  ports:
-    containerPort: 9200
-    containerInterPort: 9300
-  volumeMounts:
-  - name: data
-    mountPath: /usr/share/elasticsearch/data
-  metadata:
-    name: data
-    labels:
-      app: elasticsearch
-  specResourceRequestStorage: 200Mi
+  spec:
+    serviceName: elasticsearch
+    replicas: 1
+    template:
+      image: docker.elastic.co/elasticsearch/elasticsearch:7.15.0
+      ports:
+        containerPort: 9200
+        containerPortn2n: 9300
+      volumeMounts:
+          name: datavolume
+          mountPath: /usr/share/elasticsearch/data
+      initContainers:
+        image: busybox
+    volumeClaimTemplates:
+      name: datavolume
+      spec:
+        storageClassName: standard
+        resources:
+          storage: 2Gi
+      
 
 serviceAccount:
   # Specifies whether a service account should be created
