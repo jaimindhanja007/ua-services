@@ -68,13 +68,13 @@ serviceAccount:
 
 clusterRole:
   create: true
-  name: fluentd
+  name: fluentd-role
   labels:
     app: fluentd
   
 clusterRoleBinding:
   create: true
-  name: fluentd
+  name: fluentdrolebinding
   labels:
     app: fluentd
   nameSpace: kube-log
